@@ -1,396 +1,639 @@
-import { useState } from 'react';
-import { 
-  MessageSquarePlus, 
-  Clock, 
-  BookmarkPlus, 
-  Settings, 
-  LogOut, 
-  Send, 
-  Mic, 
+import { useState } from "react";
+import {
+  MessageSquarePlus,
+  Clock,
+  BookmarkPlus,
+  Settings,
+  LogOut,
+  Send,
+  Mic,
   Upload,
   Sparkles,
   User,
   Bot,
-  Download,
-  BarChart3,
-  Code2,
-  Trash2,
-  Menu
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import ThinkingLoader from '../components/ThinkingLoader';
-import ResultPanel from '../components/ResultPanel';
+  Menu,
+  X,
+  RotateCcw,
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import ThinkingLoader from "../components/ThinkingLoader";
+import ResultPanel from "../components/ResultPanel";
+
+interface ColorConfig {
+  bg1: string;
+  bg2: string;
+  bg3: string;
+  bgAngle: number;
+  blob1: string;
+  blob2: string;
+  accent1: string;
+  accent2: string;
+  titleC1: string;
+  titleC2: string;
+  titleC3: string;
+  subtitleC: string;
+  labelC: string;
+}
+
+const DEFAULTS: ColorConfig = {
+  bg1: "#020617",
+  bg2: "#2d0a4e",
+  bg3: "#0f172a",
+  bgAngle: 135,
+  blob1: "#a855f7",
+  blob2: "#06b6d4",
+  accent1: "#a855f7",
+  accent2: "#06b6d4",
+  titleC1: "#ffffff",
+  titleC2: "#d8b4fe",
+  titleC3: "#a5f3fc",
+  subtitleC: "#9ca3af",
+  labelC: "#d1d5db",
+};
 
 interface Message {
   id: string;
-  type: 'user' | 'ai';
+  type: "user" | "ai";
   content: string;
   timestamp: Date;
+}
+
+function ColorRow({
+  label,
+  id,
+  value,
+  onChange,
+}: {
+  label: string;
+  id: keyof ColorConfig;
+  value: string;
+  onChange: (key: keyof ColorConfig, val: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      <span className="text-xs text-gray-400 w-24 shrink-0">{label}</span>
+      <div
+        className="w-7 h-7 rounded-md border border-white/20 overflow-hidden shrink-0 cursor-pointer"
+        style={{ background: value }}
+      >
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(id, e.target.value)}
+          className="opacity-0 w-full h-full cursor-pointer"
+        />
+      </div>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => {
+          if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value))
+            onChange(id, e.target.value);
+        }}
+        className="w-20 bg-white/5 border border-white/10 rounded-md px-2 py-1 text-xs text-white font-mono"
+      />
+    </div>
+  );
+}
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-5">
+      <p className="text-xs font-medium text-gray-500 uppercase tracking-widest mb-3">
+        {title}
+      </p>
+      {children}
+      <div className="border-t border-white/5 mt-4" />
+    </div>
+  );
 }
 
 export default function DashboardScreen() {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      type: 'ai',
-      content: 'Hello! I\'m your AI assistant. How can I help you today?',
+      id: "1",
+      type: "ai",
+      content: "Hello! I'm your AI assistant. How can I help you today?",
       timestamp: new Date(),
-    }
+    },
   ]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [themeOpen, setThemeOpen] = useState(false);
+  const [cfg, setCfg] = useState<ColorConfig>({ ...DEFAULTS });
+
+  const set = (key: keyof ColorConfig, val: string | number) =>
+    setCfg((prev) => ({ ...prev, [key]: val }));
 
   const chatHistory = [
-    { id: '1', title: 'Data Analysis Request', time: '2 hours ago' },
-    { id: '2', title: 'SQL Query Generation', time: '5 hours ago' },
-    { id: '3', title: 'Chart Visualization', time: 'Yesterday' },
-    { id: '4', title: 'API Documentation', time: '2 days ago' },
+    { id: "1", title: "Data Analysis Request", time: "2 hours ago" },
+    { id: "2", title: "SQL Query Generation", time: "5 hours ago" },
+    { id: "3", title: "Chart Visualization", time: "Yesterday" },
+    { id: "4", title: "API Documentation", time: "2 days ago" },
   ];
 
   const handleSendMessage = () => {
     if (!inputValue.trim()) return;
-
     const newMessage: Message = {
       id: Date.now().toString(),
-      type: 'user',
+      type: "user",
       content: inputValue,
       timestamp: new Date(),
     };
-
     setMessages([...messages, newMessage]);
-    setInputValue('');
+    setInputValue("");
     setIsThinking(true);
-
-    // Simulate AI response
     setTimeout(() => {
       setIsThinking(false);
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: 'I\'ve analyzed your request and generated a comprehensive response. Here\'s what I found...',
+        type: "ai",
+        content:
+          "I've analyzed your request and generated a comprehensive response. Here's what I found...",
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, aiMessage]);
       setShowResult(true);
     }, 3000);
   };
 
+  const accentGradient = `linear-gradient(135deg, ${cfg.accent1}, ${cfg.accent2})`;
+  const titleGradient = `linear-gradient(135deg, ${cfg.titleC1}, ${cfg.titleC2}, ${cfg.titleC3})`;
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 relative overflow-hidden">
+    // ─── Root: full viewport, no overflow ───────────────────────────────────
+    <div
+      className="h-screen w-screen overflow-hidden relative"
+      style={{
+        background: `linear-gradient(${cfg.bgAngle}deg, ${cfg.bg1}, ${cfg.bg2}, ${cfg.bg3})`,
+      }}
+    >
       {/* Background blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.2, 0.3, 0.2],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
+          className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl"
+          style={{ background: cfg.blob1 + "33" }}
+          animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.35, 0.2] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.2, 0.3, 0.2],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
+          className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-3xl"
+          style={{ background: cfg.blob2 + "33" }}
+          animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.35, 0.2] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
         />
       </div>
 
-      {/* Main Layout */}
-      <div className="relative z-10 flex h-screen">
-        {/* Left Sidebar */}
-        <AnimatePresence>
-          {sidebarOpen && (
-            <motion.div
-              initial={{ x: -300 }}
-              animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              transition={{ type: "spring", damping: 20 }}
-              className="w-80 backdrop-blur-2xl bg-white/5 border-r border-white/10 flex flex-col"
-            >
-              {/* Logo */}
-              <div className="p-6 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/50">
-                    <Sparkles className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>AI NEXUS</h1>
-                    <p className="text-xs text-gray-400">Intelligence Platform</p>
-                  </div>
+      {/* ─── Theme Panel (fixed overlay, won't shift layout) ──────────────── */}
+      <AnimatePresence>
+        {themeOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: 320 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 320 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed top-0 right-0 h-full w-72 z-50 backdrop-blur-2xl bg-black/70 border-l border-white/10 overflow-y-auto"
+          >
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-white font-semibold text-sm">
+                  Theme Settings
+                </h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCfg({ ...DEFAULTS })}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+                    title="Reset"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setThemeOpen(false)}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
-              {/* New Chat Button */}
-              <div className="p-4">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full relative group overflow-hidden rounded-xl py-3 px-4 font-semibold text-white flex items-center justify-center gap-2"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-purple-500 to-cyan-500" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-cyan-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity" />
-                  <MessageSquarePlus className="w-5 h-5 relative z-10" />
-                  <span className="relative z-10">New Chat</span>
-                </motion.button>
-              </div>
+              <Section title="Background Gradient">
+                <ColorRow
+                  label="Color 1"
+                  id="bg1"
+                  value={cfg.bg1}
+                  onChange={set}
+                />
+                <ColorRow
+                  label="Color 2"
+                  id="bg2"
+                  value={cfg.bg2}
+                  onChange={set}
+                />
+                <ColorRow
+                  label="Color 3"
+                  id="bg3"
+                  value={cfg.bg3}
+                  onChange={set}
+                />
+                <div className="flex items-center gap-2 mt-3">
+                  <span className="text-xs text-gray-400 w-24 shrink-0">
+                    Angle
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={360}
+                    value={cfg.bgAngle}
+                    onChange={(e) => set("bgAngle", Number(e.target.value))}
+                    className="flex-1 accent-purple-500"
+                  />
+                  <span className="text-xs text-gray-400 w-8">
+                    {cfg.bgAngle}°
+                  </span>
+                </div>
+                <div
+                  className="h-7 rounded-lg mt-3 border border-white/10"
+                  style={{
+                    background: `linear-gradient(${cfg.bgAngle}deg, ${cfg.bg1}, ${cfg.bg2}, ${cfg.bg3})`,
+                  }}
+                />
+              </Section>
 
-              {/* Chat History */}
-              <div className="flex-1 overflow-y-auto px-4">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Recent Chats
-                </h3>
-                <div className="space-y-2">
-                  {chatHistory.map((chat) => (
-                    <motion.button
-                      key={chat.id}
-                      whileHover={{ x: 4 }}
-                      className="w-full text-left p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-purple-500/50 transition-all group"
+              <Section title="Blob Colors">
+                <ColorRow
+                  label="Blob 1"
+                  id="blob1"
+                  value={cfg.blob1}
+                  onChange={set}
+                />
+                <ColorRow
+                  label="Blob 2"
+                  id="blob2"
+                  value={cfg.blob2}
+                  onChange={set}
+                />
+              </Section>
+
+              <Section title="Accent Gradient">
+                <ColorRow
+                  label="Start"
+                  id="accent1"
+                  value={cfg.accent1}
+                  onChange={set}
+                />
+                <ColorRow
+                  label="End"
+                  id="accent2"
+                  value={cfg.accent2}
+                  onChange={set}
+                />
+                <div
+                  className="h-6 rounded-lg mt-2 border border-white/10"
+                  style={{ background: accentGradient }}
+                />
+              </Section>
+
+              <Section title="Font Colors">
+                <ColorRow
+                  label="Title 1"
+                  id="titleC1"
+                  value={cfg.titleC1}
+                  onChange={set}
+                />
+                <ColorRow
+                  label="Title 2"
+                  id="titleC2"
+                  value={cfg.titleC2}
+                  onChange={set}
+                />
+                <ColorRow
+                  label="Title 3"
+                  id="titleC3"
+                  value={cfg.titleC3}
+                  onChange={set}
+                />
+                <div
+                  className="h-5 rounded-lg mt-1 mb-3 border border-white/10"
+                  style={{ background: titleGradient }}
+                />
+                <ColorRow
+                  label="Subtitle"
+                  id="subtitleC"
+                  value={cfg.subtitleC}
+                  onChange={set}
+                />
+                <ColorRow
+                  label="Labels"
+                  id="labelC"
+                  value={cfg.labelC}
+                  onChange={set}
+                />
+              </Section>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Main layout: sidebar + content side by side ─────────────────── */}
+      {/*
+          KEY FIX: use CSS grid with explicit columns so the main content
+          always fills exactly the remaining width — no flex shrink weirdness.
+          Sidebar column collapses to 0 when closed via grid-template-columns.
+      */}
+      <div
+        className="relative z-10 h-full transition-all duration-300"
+        style={{
+          display: "grid",
+          gridTemplateColumns: sidebarOpen ? "320px 1fr" : "0px 1fr",
+        }}
+      >
+        {/* ── Left Sidebar ─────────────────────────────────────────────────── */}
+        <div className="overflow-hidden h-full">
+          <AnimatePresence>
+            {sidebarOpen && (
+              <motion.div
+                initial={{ x: -320 }}
+                animate={{ x: 0 }}
+                exit={{ x: -320 }}
+                transition={{ type: "spring", damping: 22, stiffness: 260 }}
+                className="w-80 h-full backdrop-blur-2xl bg-white/5 border-r border-white/10 flex flex-col"
+              >
+                {/* Logo */}
+                <div className="p-6 border-b border-white/10 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0"
+                      style={{ background: accentGradient }}
                     >
-                      <p className="text-sm text-white truncate group-hover:text-purple-300 transition-colors">{chat.title}</p>
-                      <p className="text-xs text-gray-500 mt-1">{chat.time}</p>
-                    </motion.button>
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h1
+                        className="text-xl font-bold bg-clip-text text-transparent truncate"
+                        style={{
+                          backgroundImage: titleGradient,
+                          fontFamily: "Orbitron, sans-serif",
+                        }}
+                      >
+                        PARAM-AI
+                      </h1>
+                      <p
+                        className="text-xs truncate"
+                        style={{ color: cfg.subtitleC }}
+                      >
+                        Intelligence Platform
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* New Chat */}
+                <div className="p-4 shrink-0">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full relative group overflow-hidden rounded-xl py-3 px-4 font-semibold text-white flex items-center justify-center gap-2"
+                  >
+                    <div
+                      className="absolute inset-0"
+                      style={{ background: accentGradient }}
+                    />
+                    <MessageSquarePlus className="w-5 h-5 relative z-10" />
+                    <span className="relative z-10">New Chat</span>
+                  </motion.button>
+                </div>
+
+                {/* Chat History */}
+                <div className="flex-1 overflow-y-auto px-4">
+                  <h3
+                    className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2"
+                    style={{ color: cfg.subtitleC }}
+                  >
+                    <Clock className="w-4 h-4" />
+                    Recent Chats
+                  </h3>
+                  <div className="space-y-2">
+                    {chatHistory.map((chat) => (
+                      <motion.button
+                        key={chat.id}
+                        whileHover={{ x: 4 }}
+                        className="w-full text-left p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                      >
+                        <p
+                          className="text-sm text-white truncate group-hover:transition-colors"
+                          style={
+                            { "--hover": cfg.accent1 } as React.CSSProperties
+                          }
+                        >
+                          {chat.title}
+                        </p>
+                        <p
+                          className="text-xs mt-1"
+                          style={{ color: cfg.subtitleC }}
+                        >
+                          {chat.time}
+                        </p>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bottom Menu */}
+                <div className="p-4 border-t border-white/10 space-y-1 shrink-0">
+                  {[
+                    {
+                      icon: BookmarkPlus,
+                      label: "Saved Prompts",
+                      hoverColor: cfg.accent1,
+                    },
+                    { icon: LogOut, label: "Logout", hoverColor: "#f87171" },
+                  ].map(({ icon: Icon, label, hoverColor }) => (
+                    <button
+                      key={label}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all hover:bg-white/5"
+                      style={{ color: cfg.labelC }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.color = hoverColor)
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.color = cfg.labelC)
+                      }
+                    >
+                      <Icon className="w-5 h-5 shrink-0" />
+                      <span className="text-sm">{label}</span>
+                    </button>
                   ))}
                 </div>
-              </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-              {/* Bottom Menu */}
-              <div className="p-4 border-t border-white/10 space-y-2">
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/5 hover:text-purple-300 transition-all">
-                  <BookmarkPlus className="w-5 h-5" />
-                  <span className="text-sm">Saved Prompts</span>
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/5 hover:text-cyan-300 transition-all">
-                  <Settings className="w-5 h-5" />
-                  <span className="text-sm">Settings</span>
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/5 hover:text-red-300 transition-all">
-                  <LogOut className="w-5 h-5" />
-                  <span className="text-sm">Logout</span>
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col">
+        {/* ── Main Content ─────────────────────────────────────────────────── */}
+        {/*
+            overflow-hidden on this column prevents it from ever exceeding
+            the grid cell. The inner flex col fills the cell exactly.
+        */}
+        <div className="overflow-hidden h-full flex flex-col">
           {/* Top Navbar */}
-          <div className="backdrop-blur-2xl bg-white/5 border-b border-white/10 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+          <div className="shrink-0 backdrop-blur-2xl bg-white/5 border-b border-white/10 px-6 py-4">
+            <div className="flex items-center justify-between gap-4">
+              {/* Left: toggle + title */}
+              <div className="flex items-center gap-3 min-w-0">
                 <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  onClick={() => setSidebarOpen((v) => !v)}
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors shrink-0"
                 >
                   <Menu className="w-5 h-5 text-gray-300" />
                 </button>
-                <h2 className="text-lg font-semibold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                <h2
+                  className="text-lg font-semibold bg-clip-text text-transparent truncate"
+                  style={{
+                    backgroundImage: titleGradient,
+                    fontFamily: "Orbitron, sans-serif",
+                  }}
+                >
                   AI Assistant
                 </h2>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-sm text-gray-300">Online</span>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
+
+              {/* Right: theme + status + avatar */}
+              <div className="flex items-center gap-3 shrink-0">
+                <motion.button
+                  onClick={() => setThemeOpen((v) => !v)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+                  style={{ color: cfg.labelC }}
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="text-xs hidden sm:block">Theme</span>
+                </motion.button>
+
+
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: accentGradient }}
+                >
+                  <User className="w-4 h-4 text-white" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Chat Area */}
+          {/* Chat Messages — scrollable, fills remaining height */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.map((message) => (
               <motion.div
                 key={message.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`flex gap-4 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-4 ${
+                  message.type === "user" ? "justify-end" : "justify-start"
+                }`}
               >
-                {message.type === 'ai' && (
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/50">
+                {message.type === "ai" && (
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg"
+                    style={{ background: accentGradient }}
+                  >
                     <Bot className="w-5 h-5 text-white" />
                   </div>
                 )}
-                <div className={`max-w-2xl ${message.type === 'user' ? 'order-first' : ''}`}>
-                  <div className={`backdrop-blur-xl rounded-2xl p-4 ${
-                    message.type === 'user' 
-                      ? 'bg-gradient-to-br from-purple-600/40 to-cyan-600/40 border border-purple-500/30' 
-                      : 'bg-white/5 border border-white/10'
-                  }`}>
-                    <p className="text-white leading-relaxed">{message.content}</p>
+
+                <div
+                  className={`max-w-2xl min-w-0 ${message.type === "user" ? "order-first" : ""}`}
+                >
+                  <div
+                    className="backdrop-blur-xl rounded-2xl p-4 border"
+                    style={
+                      message.type === "user"
+                        ? {
+                            background: `linear-gradient(135deg, ${cfg.accent1}33, ${cfg.accent2}33)`,
+                            borderColor: cfg.accent1 + "55",
+                          }
+                        : {
+                            background: "rgba(255,255,255,0.05)",
+                            borderColor: "rgba(255,255,255,0.1)",
+                          }
+                    }
+                  >
+                    <p className="text-white leading-relaxed break-words">
+                      {message.content}
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2 px-2">
+                  <p
+                    className="text-xs mt-2 px-2"
+                    style={{ color: cfg.subtitleC }}
+                  >
                     {message.timestamp.toLocaleTimeString()}
                   </p>
                 </div>
-                {message.type === 'user' && (
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+
+                {message.type === "user" && (
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
                     <User className="w-5 h-5 text-white" />
                   </div>
                 )}
               </motion.div>
             ))}
 
-            {/* Thinking Loader */}
             {isThinking && <ThinkingLoader />}
-
-            {/* Result Panel */}
             {showResult && <ResultPanel onClose={() => setShowResult(false)} />}
           </div>
 
           {/* Input Area */}
-          <div className="backdrop-blur-2xl bg-white/5 border-t border-white/10 p-6">
+          <div className="shrink-0 backdrop-blur-2xl bg-white/5 border-t border-white/10 p-4">
             <div className="max-w-4xl mx-auto">
-              <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
                 <div className="flex items-end gap-3 p-4">
-                  <button className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group">
-                    <Upload className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                  <button className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all shrink-0">
+                    <Upload className="w-5 h-5 text-gray-400" />
                   </button>
+
                   <textarea
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         handleSendMessage();
                       }
                     }}
                     placeholder="Ask me anything..."
-                    className="flex-1 bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none max-h-32 min-h-[40px]"
+                    className="flex-1 min-w-0 bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none max-h-32 min-h-[40px]"
                     rows={1}
                   />
-                  <button className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group">
-                    <Mic className="w-5 h-5 text-gray-400 group-hover:text-cyan-400 transition-colors" />
+
+                  <button className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all shrink-0">
+                    <Mic className="w-5 h-5 text-gray-400" />
                   </button>
+
                   <motion.button
                     onClick={handleSendMessage}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 relative group overflow-hidden shadow-lg shadow-purple-500/50"
+                    className="p-2.5 rounded-xl shadow-lg shrink-0"
+                    style={{ background: accentGradient }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-cyan-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity" />
-                    <Send className="w-5 h-5 text-white relative z-10" />
+                    <Send className="w-5 h-5 text-white" />
                   </motion.button>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 text-center mt-3">
-                Press Enter to send, Shift + Enter for new line
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side Panel */}
-        <div className="w-80 backdrop-blur-2xl bg-white/5 border-l border-white/10 p-6 hidden xl:block">
-          {/* AI Avatar */}
-          <div className="relative mb-6">
-            <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
-              <motion.div
-                className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center mb-4 shadow-2xl"
-                animate={{
-                  boxShadow: [
-                    "0 0 30px rgba(168, 85, 247, 0.6)",
-                    "0 0 60px rgba(6, 182, 212, 0.6)",
-                    "0 0 30px rgba(168, 85, 247, 0.6)",
-                  ]
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
+              <p
+                className="text-xs text-center mt-3"
+                style={{ color: cfg.subtitleC }}
               >
-                <Sparkles className="w-12 h-12 text-white" />
-              </motion.div>
-              <h3 className="text-white font-semibold mb-1" style={{ fontFamily: 'Orbitron, sans-serif' }}>AI Assistant</h3>
-              <p className="text-xs text-gray-400">Ready to help you</p>
-            </div>
-          </div>
-
-          {/* Analytics Card */}
-          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 mb-4">
-            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-purple-400" />
-              Today's Activity
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-400">Queries</span>
-                  <span className="text-white font-semibold">24</span>
-                </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-purple-500 to-cyan-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: '75%' }}
-                    transition={{ duration: 1, delay: 0.2 }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-400">Data Analyzed</span>
-                  <span className="text-white font-semibold">12 GB</span>
-                </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: '60%' }}
-                    transition={{ duration: 1, delay: 0.4 }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-400">Success Rate</span>
-                  <span className="text-white font-semibold">98%</span>
-                </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-green-500 to-emerald-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: '98%' }}
-                    transition={{ duration: 1, delay: 0.6 }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6">
-            <h3 className="text-sm font-semibold text-white mb-4">Quick Actions</h3>
-            <div className="space-y-2">
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 transition-all group">
-                <Code2 className="w-4 h-4 text-purple-400" />
-                <span className="text-sm text-gray-300 group-hover:text-white">Generate Code</span>
-              </button>
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-500/50 transition-all group">
-                <BarChart3 className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm text-gray-300 group-hover:text-white">Analyze Data</span>
-              </button>
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/50 transition-all group">
-                <Download className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-gray-300 group-hover:text-white">Export Report</span>
-              </button>
+                Press Enter to send · Shift + Enter for new line
+              </p>
             </div>
           </div>
         </div>
